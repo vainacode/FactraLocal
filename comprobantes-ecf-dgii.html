@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catálogo e-CF DGII — Formatos A4 y Ticket 80mm</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --ink:#1a1f2b;
+    --ink-soft:#4a5266;
+    --line:#c9ced9;
+    --line-soft:#e4e7ee;
+    --paper:#ffffff;
+    --bg:#eef0f4;
+    --brand:#0e5a45;
+    --brand-soft:#e3f0ec;
+    --accent:#b8860b;
+    --mono:'Courier New', ui-monospace, monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI', system-ui, -apple-system, sans-serif;background:var(--bg);color:var(--ink)}
+
+  /* ============ BARRA DE CONTROL ============ */
+  .toolbar{
+    position:sticky;top:0;z-index:50;background:var(--ink);color:#fff;
+    padding:12px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+  }
+  .toolbar h1{font-size:15px;font-weight:600;letter-spacing:.3px;margin-right:auto}
+  .toolbar h1 small{display:block;font-size:11px;font-weight:400;opacity:.65}
+  .toolbar select{
+    padding:8px 10px;border-radius:6px;border:1px solid #3a4152;background:#252b3a;
+    color:#fff;font-size:13px;min-width:300px;
+  }
+  .seg{display:flex;border:1px solid #3a4152;border-radius:6px;overflow:hidden}
+  .seg button{
+    padding:8px 16px;border:0;background:#252b3a;color:#aab2c5;font-size:13px;cursor:pointer;
+  }
+  .seg button.active{background:var(--brand);color:#fff;font-weight:600}
+  .btn-print{
+    padding:8px 18px;border:0;border-radius:6px;background:var(--accent);color:#fff;
+    font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .btn-print:hover{filter:brightness(1.1)}
+
+  /* ============ ÁREA DE VISTA ============ */
+  .stage{padding:28px 12px 60px;display:flex;flex-direction:column;align-items:center;gap:20px}
+  .type-note{
+    max-width:820px;width:100%;background:var(--brand-soft);border:1px solid #bcd8cf;
+    border-left:4px solid var(--brand);border-radius:6px;padding:12px 16px;
+    font-size:13px;color:#0d3d30;line-height:1.5;
+  }
+  .type-note b{display:block;margin-bottom:2px}
+
+  /* ============ HOJA A4 ============ */
+  .sheet-a4{
+    width:210mm;min-height:280mm;background:var(--paper);
+    box-shadow:0 4px 24px rgba(20,25,40,.18);
+    padding:14mm 14mm 12mm;position:relative;font-size:12.5px;line-height:1.45;
+  }
+  .a4-head{display:flex;justify-content:space-between;gap:24px;border-bottom:2.5px solid var(--ink);padding-bottom:12px}
+  .emisor .logo{
+    font-size:21px;font-weight:800;color:var(--brand);letter-spacing:.4px;margin-bottom:3px;
+  }
+  .emisor .logo span{color:var(--accent)}
+  .emisor p{font-size:11.5px;color:var(--ink-soft)}
+  .ncf-box{
+    border:1.6px solid var(--ink);border-radius:8px;min-width:260px;
+    text-align:center;overflow:hidden;flex-shrink:0;
+  }
+  .ncf-box .tipo{
+    background:var(--ink);color:#fff;font-size:12px;font-weight:700;
+    letter-spacing:.6px;padding:7px 10px;text-transform:uppercase;
+  }
+  .ncf-box .encf{font-family:var(--mono);font-size:19px;font-weight:700;padding:8px 10px 2px;letter-spacing:1px}
+  .ncf-box .venc{font-size:10.5px;color:var(--ink-soft);padding:0 10px 8px}
+
+  .meta-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0;
+  }
+  .meta-grid.single{grid-template-columns:1fr}
+  .panel{border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .panel h3{
+    background:#f2f4f8;font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;
+    color:var(--ink-soft);padding:6px 12px;border-bottom:1px solid var(--line-soft);font-weight:700;
+  }
+  .panel .rows{padding:8px 12px}
+  .panel .row{display:flex;gap:8px;padding:2.5px 0;font-size:12px}
+  .panel .row b{min-width:130px;color:var(--ink-soft);font-weight:600}
+
+  table.items{width:100%;border-collapse:collapse;margin-top:4px}
+  table.items thead th{
+    background:var(--ink);color:#fff;font-size:11px;text-transform:uppercase;
+    letter-spacing:.5px;padding:8px 10px;text-align:left;
+  }
+  table.items thead th.num, table.items td.num{text-align:right}
+  table.items thead th.ctr, table.items td.ctr{text-align:center}
+  table.items tbody td{padding:8px 10px;border-bottom:1px solid var(--line-soft);font-size:12px;vertical-align:top}
+  table.items tbody tr:nth-child(even){background:#fafbfd}
+
+  .bottom{display:flex;justify-content:space-between;gap:24px;margin-top:16px;align-items:flex-start}
+  .obs{flex:1;font-size:11.5px;color:var(--ink-soft)}
+  .obs .panel{margin-bottom:10px}
+  .totales{min-width:290px}
+  .totales .t-row{
+    display:flex;justify-content:space-between;padding:5px 12px;font-size:12.5px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .totales .t-row.retencion{color:#8a1f1f}
+  .totales .t-row.grand{
+    background:var(--brand);color:#fff;font-weight:800;font-size:15px;
+    border-radius:6px;margin-top:6px;padding:9px 12px;border:0;
+  }
+  .totales .t-row.usd{font-size:11.5px;color:var(--ink-soft);border:0;justify-content:flex-end;gap:8px}
+
+  .sello{
+    display:flex;gap:16px;align-items:center;margin-top:22px;padding-top:14px;
+    border-top:1.5px dashed var(--line);
+  }
+  .qr-a4{width:100px;height:100px;flex-shrink:0}
+  .qr-a4 img, .qr-a4 canvas{width:100px !important;height:100px !important}
+  .sello-info{font-size:11px;color:var(--ink-soft);line-height:1.6}
+  .sello-info .cod{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--ink);letter-spacing:1.5px}
+  .sello-info .lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.7px}
+  .a4-footer{
+    position:absolute;bottom:8mm;left:14mm;right:14mm;text-align:center;
+    font-size:10px;color:#9aa1b2;border-top:1px solid var(--line-soft);padding-top:6px;
+  }
+
+  /* ============ TICKET 80mm ============ */
+  .sheet-ticket{
+    width:80mm;background:var(--paper);box-shadow:0 4px 24px rgba(20,25,40,.18);
+    padding:6mm 4mm 8mm;font-family:var(--mono);font-size:11px;line-height:1.35;color:#000;
+  }
+  .tk-center{text-align:center}
+  .tk-emisor{font-size:13.5px;font-weight:700;letter-spacing:.5px}
+  .tk-small{font-size:10px}
+  .tk-sep{border:0;border-top:1px dashed #000;margin:6px 0}
+  .tk-tipo{font-weight:700;font-size:11.5px;text-transform:uppercase;margin-top:4px}
+  .tk-encf{font-size:12.5px;font-weight:700;letter-spacing:.5px}
+  .tk-kv{display:flex;justify-content:space-between;gap:6px}
+  .tk-kv span:first-child{flex-shrink:0}
+  .tk-kv span:last-child{text-align:right;word-break:break-word}
+  .tk-items{width:100%;border-collapse:collapse;font-size:10.5px}
+  .tk-items th{text-align:left;border-bottom:1px solid #000;padding:2px 0;font-size:9.5px}
+  .tk-items th.num,.tk-items td.num{text-align:right}
+  .tk-items td{padding:2px 0;vertical-align:top}
+  .tk-desc{font-size:10.5px}
+  .tk-tot .tk-kv{padding:1px 0}
+  .tk-tot .grand{font-size:13px;font-weight:700;border-top:1px solid #000;margin-top:3px;padding-top:3px}
+  .qr-tk{display:flex;justify-content:center;margin:8px 0 4px}
+  .qr-tk img,.qr-tk canvas{width:84px !important;height:84px !important}
+  .tk-cod{font-size:12px;font-weight:700;letter-spacing:2px}
+
+  /* ============ IMPRESIÓN ============ */
+  @media print{
+    body{background:#fff}
+    .toolbar,.type-note{display:none !important}
+    .stage{padding:0}
+    .sheet-a4{box-shadow:none;width:auto;min-height:auto;padding:10mm}
+    .sheet-ticket{box-shadow:none}
+    body.print-ticket @page{size:80mm auto;margin:0}
+  }
+  @page{margin:8mm}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h1>Catálogo de Comprobantes Fiscales Electrónicos (e-CF) · DGII
+    <small>Norma General 01-2020 · Facturación Electrónica República Dominicana</small>
+  </h1>
+  <select id="selTipo" onchange="render()"></select>
+  <div class="seg">
+    <button id="btnA4" class="active" onclick="setFormato('a4')">Formato A4</button>
+    <button id="btnTk" onclick="setFormato('ticket')">Ticket 80mm</button>
+  </div>
+  <button class="btn-print" onclick="window.print()">🖨 Imprimir</button>
+</div>
+
+<div class="stage">
+  <div class="type-note" id="nota"></div>
+  <div id="docArea"></div>
+</div>
+<script>
+/* =====================================================================
+   DATOS DEL EMISOR (demo) — sustituir con los datos reales del cliente
+===================================================================== */
+const EMISOR = {
+  razon: "BELLOTA HOSTING SRL",
+  nombreComercial: "Bellota Hosting",
+  rnc: "131234567",
+  direccion: "Av. Estrella Sadhalá No. 45, Santiago de los Caballeros",
+  tel: "(809) 555-0147",
+  email: "facturacion@bellotahosting.net",
+  web: "bellotahosting.net"
+};
+
+const HOY = "12/07/2026";
+const FECHA_FIRMA = "12/07/2026 10:32:15";
+const VENC_SEC = "31/12/2026";
+
+/* =====================================================================
+   CATÁLOGO COMPLETO DE TIPOS e-CF (Norma General 01-2020)
+===================================================================== */
+const TIPOS = {
+  "31": {
+    nombre: "Factura de Crédito Fiscal Electrónica",
+    encf: "E310000000101",
+    nota: "Sustenta crédito fiscal (ITBIS) y costos/gastos deducibles. Emitida a contribuyentes con RNC. Requiere RNC y razón social del comprador obligatoriamente.",
+    comprador: { titulo: "Cliente", rnc: "101823459", nombre: "PERIÓDICO BAHÍA FRONTERIZA SRL", dir: "C/ Duarte No. 12, Dajabón" },
+    condicion: "Crédito 30 días",
+    items: [
+      { cant: 1, desc: "Desarrollo portal de noticias — React + API REST", precio: 85000, itbis: 0.18 },
+      { cant: 12, desc: "Hosting VPS administrado (mensualidad)", precio: 2500, itbis: 0.18 },
+      { cant: 1, desc: "Certificado SSL Wildcard (anual)", precio: 6500, itbis: 0.18 }
+    ]
+  },
+  "32": {
+    nombre: "Factura de Consumo Electrónica",
+    encf: "E320000000245",
+    nota: "Para consumidores finales sin crédito fiscal. Si el monto es menor a RD$250,000 el QR apunta al servicio simplificado fc.dgii.gov.do (representación resumida permitida); igual o mayor requiere RNC/cédula del comprador y QR estándar.",
+    comprador: { titulo: "Cliente", rnc: "", nombre: "Consumidor Final", dir: "" },
+    condicion: "Contado",
+    items: [
+      { cant: 1, desc: "Dominio .com.do (registro anual)", precio: 1650, itbis: 0.18 },
+      { cant: 1, desc: "Plan hosting compartido — 1 año", precio: 4800, itbis: 0.18 },
+      { cant: 2, desc: "Cuenta de correo corporativo adicional", precio: 450, itbis: 0.18 }
+    ]
+  },
+  "33": {
+    nombre: "Nota de Débito Electrónica",
+    encf: "E330000000012",
+    nota: "Aumenta el valor de un e-CF emitido previamente (intereses por mora, ajustes de precio, gastos no incluidos). Debe indicar el e-NCF modificado y su fecha.",
+    comprador: { titulo: "Cliente", rnc: "101823459", nombre: "PERIÓDICO BAHÍA FRONTERIZA SRL", dir: "C/ Duarte No. 12, Dajabón" },
+    modifica: { encf: "E310000000101", fecha: "15/06/2026", razon: "Interés por mora — pago fuera de plazo (2.5%)" },
+    condicion: "Contado",
+    items: [
+      { cant: 1, desc: "Interés por mora sobre factura E310000000101", precio: 2325, itbis: 0.18 }
+    ]
+  },
+  "34": {
+    nombre: "Nota de Crédito Electrónica",
+    encf: "E340000000038",
+    nota: "Disminuye el valor de un e-CF anterior (devoluciones, descuentos posteriores, anulación de servicios). Debe indicar el e-NCF modificado, su fecha y el motivo. Dentro de los 30 días conserva efecto fiscal pleno.",
+    comprador: { titulo: "Cliente", rnc: "101823459", nombre: "PERIÓDICO BAHÍA FRONTERIZA SRL", dir: "C/ Duarte No. 12, Dajabón" },
+    modifica: { encf: "E310000000101", fecha: "15/06/2026", razon: "Devolución parcial — servicio SSL no utilizado" },
+    condicion: "N/A",
+    items: [
+      { cant: 1, desc: "Devolución: Certificado SSL Wildcard (anual)", precio: 6500, itbis: 0.18 }
+    ]
+  },
+  "41": {
+    nombre: "Comprobante Electrónico de Compras",
+    encf: "E410000000007",
+    nota: "Lo emite el propio contribuyente cuando compra a proveedores NO registrados (personas físicas sin RNC activo). El emisor actúa como comprador y aplica las retenciones de ITBIS (100%) e ISR (10% servicios) correspondientes.",
+    comprador: { titulo: "Proveedor (persona física no registrada)", rnc: "00112345678", nombre: "JUAN ALBERTO REYES PÉREZ", dir: "Los Salados, Santiago", esCedula: true },
+    condicion: "Contado",
+    retenciones: { itbisPct: 1.00, isrPct: 0.10 },
+    items: [
+      { cant: 1, desc: "Servicio de cableado estructurado — oficina principal", precio: 18000, itbis: 0.18 }
+    ]
+  },
+  "43": {
+    nombre: "Comprobante Electrónico para Gastos Menores",
+    encf: "E430000000021",
+    nota: "Sustenta gastos menores del personal en el exterior de la empresa (parqueos, propinas, pasajes, alimentación en ruta). Lo emite el propio contribuyente; NO lleva datos de proveedor ni ITBIS facultativo.",
+    comprador: null,
+    sinItbis: true,
+    condicion: "Contado",
+    items: [
+      { cant: 1, desc: "Parqueo — visita técnica cliente zona monumental", precio: 150, itbis: 0 },
+      { cant: 2, desc: "Pasaje urbano — mensajería documentos DGII", precio: 50, itbis: 0 },
+      { cant: 1, desc: "Almuerzo personal técnico en ruta", precio: 425, itbis: 0 }
+    ]
+  },
+  "44": {
+    nombre: "Comprobante Electrónico para Regímenes Especiales",
+    encf: "E440000000015",
+    nota: "Ventas a entidades acogidas a regímenes especiales de tributación (zonas francas, Ley 158-01 turismo, cuerpos diplomáticos, ONG exentas). La operación se factura EXENTA de ITBIS (indicador E).",
+    comprador: { titulo: "Cliente (régimen especial)", rnc: "102987654", nombre: "TEXTILES DEL CIBAO ZF, S.A. — Zona Franca Santiago", dir: "Parque Industrial Víctor Espaillat, Santiago" },
+    exento: true,
+    condicion: "Crédito 30 días",
+    items: [
+      { cant: 1, desc: "Desarrollo sistema de control de inventario", precio: 65000, itbis: 0 },
+      { cant: 6, desc: "Soporte técnico mensual (contrato semestral)", precio: 4000, itbis: 0 }
+    ]
+  },
+  "45": {
+    nombre: "Comprobante Electrónico Gubernamental",
+    encf: "E450000000009",
+    nota: "Ventas de bienes o servicios a instituciones del Estado dominicano. El comprador es una entidad gubernamental identificada con su RNC institucional.",
+    comprador: { titulo: "Institución del Estado", rnc: "401007551", nombre: "AYUNTAMIENTO DEL MUNICIPIO DE SANTIAGO", dir: "Av. Juan Pablo Duarte, Santiago" },
+    condicion: "Crédito 45 días — Orden de compra OC-2026-0341",
+    items: [
+      { cant: 1, desc: "Portal web institucional con módulo de transparencia", precio: 145000, itbis: 0.18 },
+      { cant: 12, desc: "Mantenimiento y hosting gubernamental (mensual)", precio: 5500, itbis: 0.18 }
+    ]
+  },
+  "46": {
+    nombre: "Comprobante Electrónico de Exportaciones",
+    encf: "E460000000004",
+    nota: "Ventas de bienes/servicios al exterior. El comprador es extranjero (sin RNC); la operación está gravada a tasa 0% de ITBIS. Puede expresarse en moneda extranjera indicando la tasa de cambio.",
+    comprador: { titulo: "Cliente del exterior", rnc: "", nombre: "CARIBBEAN MEDIA GROUP LLC", dir: "8300 NW 53rd St, Miami, FL, Estados Unidos", pais: "Estados Unidos" },
+    exportacion: true,
+    moneda: "USD",
+    tasaCambio: 61.85,
+    condicion: "Transferencia internacional — 15 días",
+    items: [
+      { cant: 1, desc: "Desarrollo plataforma multimedia (SPA React)", precio: 3800, itbis: 0 },
+      { cant: 1, desc: "Integración pasarela de pagos internacional", precio: 950, itbis: 0 }
+    ]
+  },
+  "47": {
+    nombre: "Comprobante Electrónico para Pagos al Exterior",
+    encf: "E470000000003",
+    nota: "Lo emite el contribuyente local al pagar servicios a proveedores del exterior (sin RNC). Sustenta la retención del ISR (27%) sobre pagos girados al extranjero, conforme al Art. 305 del Código Tributario.",
+    comprador: { titulo: "Proveedor del exterior", rnc: "", nombre: "CLOUDSTACK INFRASTRUCTURE INC.", dir: "548 Market St, San Francisco, CA, Estados Unidos", pais: "Estados Unidos" },
+    pagoExterior: true,
+    moneda: "USD",
+    tasaCambio: 61.85,
+    sinItbis: true,
+    retenciones: { isrPct: 0.27 },
+    condicion: "Pago electrónico internacional",
+    items: [
+      { cant: 1, desc: "Infraestructura cloud dedicada — trimestre Q3-2026", precio: 1200, itbis: 0 }
+    ]
+  }
+};
+
+/* =====================================================================
+   UTILIDADES
+===================================================================== */
+function money(v, cur){
+  const c = cur || "DOP";
+  const s = new Intl.NumberFormat("es-DO",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v);
+  return (c === "USD" ? "US$" : "RD$") + s;
+}
+
+function calc(t){
+  let sub = 0, itbis = 0;
+  t.items.forEach(i => { const imp = i.cant * i.precio; sub += imp; itbis += imp * i.itbis; });
+  const total = sub + itbis;
+  let retIt = 0, retIsr = 0;
+  if (t.retenciones){
+    if (t.retenciones.itbisPct) retIt = itbis * t.retenciones.itbisPct;
+    if (t.retenciones.isrPct)  retIsr = sub * t.retenciones.isrPct;
+  }
+  return { sub, itbis, total, retIt, retIsr, neto: total - retIt - retIsr };
+}
+
+function fmtFechaQR(f){ return f.split("/").join("-"); } // dd-mm-aaaa
+
+/* URL del QR según especificación técnica de la DGII */
+function qrURL(t){
+  const c = calc(t);
+  const montoDOP = t.moneda === "USD" ? c.total * t.tasaCambio : c.total;
+  const monto = montoDOP.toFixed(2);
+  const cod = "aB3xZ9";
+  // Factura de Consumo < RD$250,000 → consulta simplificada (fc.dgii.gov.do)
+  if (t.encf.startsWith("E32") && montoDOP < 250000){
+    return "https://fc.dgii.gov.do/eCF/ConsultaTimbreFC?RncEmisor=" + EMISOR.rnc +
+           "&ENCF=" + t.encf + "&MontoTotal=" + monto + "&CodigoSeguridad=" + cod;
+  }
+  let u = "https://ecf.dgii.gov.do/ecf/ConsultaTimbre?RncEmisor=" + EMISOR.rnc;
+  if (t.comprador && t.comprador.rnc) u += "&RncComprador=" + t.comprador.rnc;
+  u += "&ENCF=" + t.encf +
+       "&FechaEmision=" + fmtFechaQR(HOY) +
+       "&MontoTotal=" + monto +
+       "&FechaFirma=" + encodeURIComponent(fmtFechaQR(FECHA_FIRMA.split(" ")[0]) + " " + FECHA_FIRMA.split(" ")[1]) +
+       "&CodigoSeguridad=" + cod;
+  return u;
+}
+
+function makeQR(elId, t, size){
+  const el = document.getElementById(elId);
+  if (!el || typeof QRCode === "undefined") return;
+  new QRCode(el, { text: qrURL(t), width: size, height: size, correctLevel: QRCode.CorrectLevel.M });
+}
+
+/* =====================================================================
+   RENDER — FORMATO A4
+===================================================================== */
+function renderA4(cod, t){
+  const c = calc(t);
+  const cur = t.moneda || "DOP";
+  const filas = t.items.map(i => {
+    const imp = i.cant * i.precio;
+    return '<tr><td class="ctr">' + i.cant + '</td><td>' + i.desc + '</td>' +
+      '<td class="num">' + money(i.precio, cur) + '</td>' +
+      '<td class="num">' + (i.itbis > 0 ? money(imp * i.itbis, cur) : (t.exento || t.exportacion ? "E" : "—")) + '</td>' +
+      '<td class="num">' + money(imp, cur) + '</td></tr>';
+  }).join("");
+
+  // Panel comprador / proveedor
+  let panelComp = "";
+  if (t.comprador){
+    const idLbl = t.comprador.esCedula ? "Cédula" : "RNC";
+    panelComp =
+      '<div class="panel"><h3>' + t.comprador.titulo + '</h3><div class="rows">' +
+      (t.comprador.rnc ? '<div class="row"><b>' + idLbl + ':</b><span>' + t.comprador.rnc + '</span></div>' : "") +
+      '<div class="row"><b>Razón social:</b><span>' + t.comprador.nombre + '</span></div>' +
+      (t.comprador.dir ? '<div class="row"><b>Dirección:</b><span>' + t.comprador.dir + '</span></div>' : "") +
+      (t.comprador.pais ? '<div class="row"><b>País:</b><span>' + t.comprador.pais + '</span></div>' : "") +
+      '</div></div>';
+  }
+
+  // Panel e-CF modificado (NC / ND)
+  let panelMod = "";
+  if (t.modifica){
+    panelMod =
+      '<div class="panel"><h3>Comprobante modificado</h3><div class="rows">' +
+      '<div class="row"><b>e-NCF modificado:</b><span style="font-family:var(--mono);font-weight:700">' + t.modifica.encf + '</span></div>' +
+      '<div class="row"><b>Fecha emisión:</b><span>' + t.modifica.fecha + '</span></div>' +
+      '<div class="row"><b>Razón modificación:</b><span>' + t.modifica.razon + '</span></div>' +
+      '</div></div>';
+  }
+
+  const panelDatos =
+    '<div class="panel"><h3>Datos del comprobante</h3><div class="rows">' +
+    '<div class="row"><b>Fecha emisión:</b><span>' + HOY + '</span></div>' +
+    '<div class="row"><b>Condición de pago:</b><span>' + t.condicion + '</span></div>' +
+    (t.moneda === "USD" ? '<div class="row"><b>Moneda / Tasa:</b><span>USD — RD$' + t.tasaCambio.toFixed(2) + ' por US$1.00</span></div>' : "") +
+    '</div></div>';
+
+  const paneles = [panelComp, panelMod, panelDatos].filter(Boolean).join("");
+  const gridCls = "meta-grid" + ((panelComp?1:0)+(panelMod?1:0)+1 === 1 ? " single" : "");
+
+  // Totales
+  let tot =
+    '<div class="t-row"><span>Subtotal ' + (t.exento || t.exportacion ? "exento" : (t.sinItbis ? "" : "gravado")) + '</span><span>' + money(c.sub, cur) + '</span></div>';
+  if (!t.sinItbis){
+    tot += '<div class="t-row"><span>ITBIS (18%)</span><span>' + (c.itbis > 0 ? money(c.itbis, cur) : (t.exento || t.exportacion ? "Exento (E)" : money(0, cur))) + '</span></div>';
+  }
+  tot += '<div class="t-row grand"><span>TOTAL</span><span>' + money(c.total, cur) + '</span></div>';
+  if (c.retIt > 0)  tot += '<div class="t-row retencion"><span>Retención ITBIS (100%)</span><span>-' + money(c.retIt, cur) + '</span></div>';
+  if (c.retIsr > 0) tot += '<div class="t-row retencion"><span>Retención ISR (' + Math.round(t.retenciones.isrPct * 100) + '%)</span><span>-' + money(c.retIsr, cur) + '</span></div>';
+  if (c.retIt > 0 || c.retIsr > 0) tot += '<div class="t-row" style="font-weight:700"><span>Neto a pagar</span><span>' + money(c.neto, cur) + '</span></div>';
+  if (t.moneda === "USD") tot += '<div class="t-row usd"><span>Equivalente:</span><span>' + money(c.total * t.tasaCambio, "DOP") + '</span></div>';
+
+  return '' +
+  '<div class="sheet-a4">' +
+    '<div class="a4-head">' +
+      '<div class="emisor">' +
+        '<div class="logo">BELLOTA<span>HOSTING</span></div>' +
+        '<p><b>' + EMISOR.razon + '</b> · RNC: ' + EMISOR.rnc + '</p>' +
+        '<p>' + EMISOR.direccion + '</p>' +
+        '<p>Tel: ' + EMISOR.tel + ' · ' + EMISOR.email + ' · ' + EMISOR.web + '</p>' +
+      '</div>' +
+      '<div class="ncf-box">' +
+        '<div class="tipo">' + t.nombre + '</div>' +
+        '<div class="encf">' + t.encf + '</div>' +
+        '<div class="venc">Tipo ' + cod + ' · Vencimiento secuencia: ' + VENC_SEC + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="' + gridCls + '">' + paneles + '</div>' +
+    '<table class="items"><thead><tr>' +
+      '<th class="ctr" style="width:52px">Cant.</th><th>Descripción</th>' +
+      '<th class="num" style="width:110px">Precio unit.</th>' +
+      '<th class="num" style="width:100px">ITBIS</th>' +
+      '<th class="num" style="width:120px">Importe</th>' +
+    '</tr></thead><tbody>' + filas + '</tbody></table>' +
+    '<div class="bottom">' +
+      '<div class="obs">' +
+        (t.exportacion ? '<div class="panel"><h3>Observaciones</h3><div class="rows"><div class="row">Operación de exportación de servicios — ITBIS tasa 0% (Art. 342 Código Tributario).</div></div></div>' : "") +
+        (t.pagoExterior ? '<div class="panel"><h3>Observaciones</h3><div class="rows"><div class="row">Retención ISR 27% sobre pagos girados al exterior — Art. 305 Código Tributario.</div></div></div>' : "") +
+        (t.exento ? '<div class="panel"><h3>Observaciones</h3><div class="rows"><div class="row">Venta exenta de ITBIS — comprador acogido a régimen especial de tributación.</div></div></div>' : "") +
+        '<p style="margin-top:8px">Documento emitido conforme a la Ley 32-23 de Facturación Electrónica y la Norma General 01-2020 de la DGII. Verifique la validez de este e-CF escaneando el código QR.</p>' +
+      '</div>' +
+      '<div class="totales">' + tot + '</div>' +
+    '</div>' +
+    '<div class="sello">' +
+      '<div class="qr-a4" id="qrA4"></div>' +
+      '<div class="sello-info">' +
+        '<div class="lbl">Código de seguridad</div>' +
+        '<div class="cod">aB3xZ9</div>' +
+        '<div style="margin-top:6px"><span class="lbl">Fecha de firma digital:</span> ' + FECHA_FIRMA + '</div>' +
+        '<div><span class="lbl">Consulta:</span> ecf.dgii.gov.do</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="a4-footer">' + EMISOR.razon + ' · RNC ' + EMISOR.rnc + ' — Comprobante Fiscal Electrónico (e-CF) · Página 1 de 1</div>' +
+  '</div>';
+}
+
+/* =====================================================================
+   RENDER — TICKET 80mm
+===================================================================== */
+function renderTicket(cod, t){
+  const c = calc(t);
+  const cur = t.moneda || "DOP";
+  const filas = t.items.map(i => {
+    const imp = i.cant * i.precio;
+    return '<tr><td>' + i.cant + '</td><td class="tk-desc">' + i.desc + '</td>' +
+           '<td class="num">' + money(imp, cur) + '</td></tr>';
+  }).join("");
+
+  let comp = "";
+  if (t.comprador && t.comprador.nombre !== "Consumidor Final"){
+    const idLbl = t.comprador.esCedula ? "Céd" : "RNC";
+    comp = '<hr class="tk-sep">' +
+      '<div class="tk-small"><b>' + t.comprador.titulo.toUpperCase() + ':</b></div>' +
+      '<div class="tk-small">' + t.comprador.nombre + '</div>' +
+      (t.comprador.rnc ? '<div class="tk-small">' + idLbl + ': ' + t.comprador.rnc + '</div>' : "") +
+      (t.comprador.pais ? '<div class="tk-small">País: ' + t.comprador.pais + '</div>' : "");
+  } else if (t.comprador){
+    comp = '<hr class="tk-sep"><div class="tk-small">Cliente: Consumidor Final</div>';
+  }
+
+  let mod = "";
+  if (t.modifica){
+    mod = '<hr class="tk-sep">' +
+      '<div class="tk-small"><b>MODIFICA e-NCF:</b> ' + t.modifica.encf + '</div>' +
+      '<div class="tk-small">Fecha: ' + t.modifica.fecha + '</div>' +
+      '<div class="tk-small">' + t.modifica.razon + '</div>';
+  }
+
+  let tot = '<div class="tk-kv"><span>SUBTOTAL' + (t.exento || t.exportacion ? " EXENTO" : "") + '</span><span>' + money(c.sub, cur) + '</span></div>';
+  if (!t.sinItbis){
+    tot += '<div class="tk-kv"><span>ITBIS 18%</span><span>' + (c.itbis > 0 ? money(c.itbis, cur) : "EXENTO") + '</span></div>';
+  }
+  tot += '<div class="tk-kv grand"><span>TOTAL</span><span>' + money(c.total, cur) + '</span></div>';
+  if (c.retIt > 0)  tot += '<div class="tk-kv"><span>RET. ITBIS 100%</span><span>-' + money(c.retIt, cur) + '</span></div>';
+  if (c.retIsr > 0) tot += '<div class="tk-kv"><span>RET. ISR ' + Math.round(t.retenciones.isrPct*100) + '%</span><span>-' + money(c.retIsr, cur) + '</span></div>';
+  if (c.retIt > 0 || c.retIsr > 0) tot += '<div class="tk-kv" style="font-weight:700"><span>NETO A PAGAR</span><span>' + money(c.neto, cur) + '</span></div>';
+  if (t.moneda === "USD") tot += '<div class="tk-kv tk-small"><span>Equiv. DOP</span><span>' + money(c.total * t.tasaCambio, "DOP") + '</span></div>';
+
+  return '' +
+  '<div class="sheet-ticket">' +
+    '<div class="tk-center">' +
+      '<div class="tk-emisor">' + EMISOR.razon + '</div>' +
+      '<div class="tk-small">RNC: ' + EMISOR.rnc + '</div>' +
+      '<div class="tk-small">' + EMISOR.direccion + '</div>' +
+      '<div class="tk-small">Tel: ' + EMISOR.tel + '</div>' +
+    '</div>' +
+    '<hr class="tk-sep">' +
+    '<div class="tk-center">' +
+      '<div class="tk-tipo">' + t.nombre + '</div>' +
+      '<div class="tk-encf">e-NCF: ' + t.encf + '</div>' +
+      '<div class="tk-small">Venc. secuencia: ' + VENC_SEC + '</div>' +
+    '</div>' +
+    '<hr class="tk-sep">' +
+    '<div class="tk-kv tk-small"><span>Fecha:</span><span>' + HOY + '</span></div>' +
+    '<div class="tk-kv tk-small"><span>Condición:</span><span>' + t.condicion + '</span></div>' +
+    (t.moneda === "USD" ? '<div class="tk-kv tk-small"><span>Tasa cambio:</span><span>RD$' + t.tasaCambio.toFixed(2) + '</span></div>' : "") +
+    comp + mod +
+    '<hr class="tk-sep">' +
+    '<table class="tk-items"><thead><tr><th style="width:24px">Cant</th><th>Descripción</th><th class="num" style="width:78px">Importe</th></tr></thead>' +
+    '<tbody>' + filas + '</tbody></table>' +
+    '<hr class="tk-sep">' +
+    '<div class="tk-tot">' + tot + '</div>' +
+    '<div class="qr-tk" id="qrTk"></div>' +
+    '<div class="tk-center">' +
+      '<div class="tk-small">CÓDIGO DE SEGURIDAD</div>' +
+      '<div class="tk-cod">aB3xZ9</div>' +
+      '<div class="tk-small">Firma digital: ' + FECHA_FIRMA + '</div>' +
+      '<div class="tk-small">Verifique en ecf.dgii.gov.do</div>' +
+      '<hr class="tk-sep">' +
+      '<div class="tk-small">*** GRACIAS POR SU PREFERENCIA ***</div>' +
+      '<div class="tk-small">' + EMISOR.web + '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+/* =====================================================================
+   CONTROL DE VISTA
+===================================================================== */
+let formato = "a4";
+
+function setFormato(f){
+  formato = f;
+  document.getElementById("btnA4").classList.toggle("active", f === "a4");
+  document.getElementById("btnTk").classList.toggle("active", f === "ticket");
+  document.body.classList.toggle("print-ticket", f === "ticket");
+  render();
+}
+
+function render(){
+  const cod = document.getElementById("selTipo").value;
+  const t = TIPOS[cod];
+  document.getElementById("nota").innerHTML = "<b>e-CF Tipo " + cod + " — " + t.nombre + "</b>" + t.nota;
+  document.getElementById("docArea").innerHTML = (formato === "a4") ? renderA4(cod, t) : renderTicket(cod, t);
+  makeQR(formato === "a4" ? "qrA4" : "qrTk", t, formato === "a4" ? 100 : 84);
+}
+
+/* Inicializar selector */
+(function(){
+  const sel = document.getElementById("selTipo");
+  Object.keys(TIPOS).forEach(cod => {
+    const o = document.createElement("option");
+    o.value = cod;
+    o.textContent = cod + " — " + TIPOS[cod].nombre;
+    sel.appendChild(o);
+  });
+  render();
+})();
+</script>
+</body>
+</html>

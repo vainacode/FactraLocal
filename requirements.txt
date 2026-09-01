@@ -1,0 +1,7 @@
+Pillow
+psycopg2-binary
+requests
+ttkthemes
+reportlab
+cryptography
+python-barcode
