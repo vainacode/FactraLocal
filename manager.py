@@ -8,6 +8,7 @@ from container import Container
 from window_utils import posicionar_ventana
 from permisos import preparar_permisos
 from seguridad import hash_password, PREFIJO
+from licencia import VentanaLicencia
 
 
 class EntrySeguro(ttk.Entry):
@@ -561,6 +562,17 @@ class Manager(Tk):
         
         self.load_frames()
 
+        # Licencia temporalmente desactivada mientras se termina su revisión.
+        # Se conserva el módulo para volver a habilitarlo posteriormente.
+        self.show_frame(Login)
+
+    def _mostrar_licencia(self):
+        if not self.winfo_exists():
+            return
+        self.ventana_licencia = VentanaLicencia(self, on_activated=self._licencia_aceptada)
+
+    def _licencia_aceptada(self):
+        self.deiconify()
         self.show_frame(Login)
 
     def load_frames(self):

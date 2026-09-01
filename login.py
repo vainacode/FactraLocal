@@ -55,6 +55,17 @@ class Login(tk.Frame):
     def validacion(self, user, pas):
         return len(user) > 0 and len(pas) > 0
 
+    def mostrar_aviso_login(self, titulo, mensaje, tipo="info"):
+        """Muestra el aviso y devuelve el teclado al usuario al cerrarlo."""
+        from dialogos import mostrar_dialogo
+        dialogo = mostrar_dialogo(self.controlador, titulo, mensaje, tipo)
+        dialogo.bind(
+            "<Destroy>",
+            lambda _evento: self.after(60, self.enfocar_usuario),
+            add="+",
+        )
+        return dialogo
+
     def login(self):
         user = self.username.get().strip()
         pas = self.password.get().strip()
@@ -107,14 +118,23 @@ class Login(tk.Frame):
                         registrar_evento(None, user, "LOGIN_FALLIDO", "Credenciales inválidas o usuario inactivo")
                         self.username.delete(0, 'end')
                         self.password.delete(0, 'end')
-                        from dialogos import mostrar_dialogo
-                        mostrar_dialogo(self.controlador, "Acceso denegado", "Usuario y/o contraseña incorrecta.", "error")
+                        self.mostrar_aviso_login(
+                            "Acceso denegado",
+                            "Usuario y/o contraseña incorrecta.",
+                            "error",
+                        )
             except sqlite3.Error as e:
-                from dialogos import mostrar_dialogo
-                mostrar_dialogo(self.controlador, "Error de conexión", f"No se conectó a la base de datos: {e}", "error")
+                self.mostrar_aviso_login(
+                    "Error de conexión",
+                    f"No se conectó a la base de datos: {e}",
+                    "error",
+                )
         else:
-            from dialogos import mostrar_dialogo
-            mostrar_dialogo(self.controlador, "Datos incompletos", "Llene todas las casillas.", "warning")
+            self.mostrar_aviso_login(
+                "Datos incompletos",
+                "Llene todas las casillas.",
+                "warning",
+            )
 
     def password_command(self):
         if self.password.cget('show') == "*":

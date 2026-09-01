@@ -57,6 +57,14 @@ class Prueba(tk.Toplevel):
         self.minsize(900, 500)
         self._ajustar_al_contenedor(parent)
         self.configure(bg=self.FONDO)
+        # Se comporta como las demás ventanas del sistema: queda asociada al
+        # contenedor y captura la interacción mientras está abierta, pero al
+        # cerrarse solo se destruye esta ventana hija.
+        try:
+            self.transient(parent.winfo_toplevel() if parent is not None else None)
+            self.grab_set()
+        except tk.TclError:
+            pass
         # Prueba es la ventana principal del flujo de venta, no un modal del
         # contenedor. Los modales se enlazan a esta ventana individualmente.
 
@@ -79,7 +87,10 @@ class Prueba(tk.Toplevel):
         # cuando todos los widgets ya fueron creados para no bloquear el
         # Toplevel al abrirlo desde el menú principal.
         self.update_idletasks()
+        # El encabezado azul de Factra reemplaza la barra nativa de Windows;
+        # así se muestra un solo título y no un encabezado duplicado.
         self.overrideredirect(True)
+        self.protocol("WM_DELETE_WINDOW", self._cerrar)
         self.after(120, self._enfocar_busqueda)
 
     def _ajustar_al_contenedor(self, parent):
@@ -127,7 +138,19 @@ class Prueba(tk.Toplevel):
 
     def _cerrar(self):
         if self.winfo_exists():
+            try:
+                self.grab_release()
+            except tk.TclError:
+                pass
             self.destroy()
+            try:
+                principal = self.parent.winfo_toplevel() if self.parent is not None else None
+                if principal is not None and principal.winfo_exists():
+                    principal.deiconify()
+                    principal.lift()
+                    principal.focus_force()
+            except tk.TclError:
+                pass
 
     def _guardar_ventana_secundaria(self, ventana):
         """Mantiene vivos los modales y los coloca sobre la venta actual."""

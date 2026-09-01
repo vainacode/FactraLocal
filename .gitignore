@@ -17,3 +17,6 @@ build/
 *.log
 *.tmp
 *.bak
+.factra_license
+backups/
+documentos_emitidos/

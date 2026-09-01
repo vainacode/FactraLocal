@@ -106,7 +106,14 @@ class Container(tk.Frame):
             self.ventana_prueba.focus_force()
             return
         self.ventana_prueba = Prueba(self, usuario=user_info.get("nombre") or user_info.get("username", "Demo"))
-        self.ventana_prueba.bind("<Destroy>", lambda _evento: setattr(self, "ventana_prueba", None))
+
+        def limpiar_referencia(evento):
+            # Solo se limpia la referencia cuando se destruye la ventana de
+            # Prueba, nunca por la destrucción de uno de sus controles.
+            if evento.widget is self.ventana_prueba:
+                self.ventana_prueba = None
+
+        self.ventana_prueba.bind("<Destroy>", limpiar_referencia, add="+")
 
     def actualizar_usuario(self):
         user_info = getattr(self.controlador, "usuario_actual", {})
